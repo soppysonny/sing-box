@@ -238,7 +238,7 @@ lib_apple:
 	go run ./cmd/internal/build_libbox -target apple
 
 lib_ios:
-	go run ./cmd/internal/build_libbox -target apple -platform ios -debug
+	go run ./cmd/internal/build_libbox -target apple -platform ios
 
 lib:
 	go run ./cmd/internal/build_libbox -target android
