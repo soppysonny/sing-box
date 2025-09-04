@@ -118,7 +118,7 @@ func buildAndroid() {
 	}
 
 	args = append(args, "-tags", strings.Join(tags, ","))
-	args = append(args, "./experimental/libbox")
+	args = append(args, "./experimental/CometBox")
 
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
@@ -154,7 +154,7 @@ func buildApple() {
 		"bind",
 		"-v",
 		"-target", bindTarget,
-		"-libname=box",
+		"-libname=CometBox",
 		"-tags-not-macos=with_low_memory",
 	}
 	if !withTailscale {
@@ -176,7 +176,7 @@ func buildApple() {
 	}
 
 	args = append(args, "-tags", strings.Join(tags, ","))
-	args = append(args, "./experimental/libbox")
+	args = append(args, "./experimental/CometBox")
 
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
@@ -188,10 +188,10 @@ func buildApple() {
 
 	copyPath := filepath.Join("..", "sing-box-for-apple")
 	if rw.IsDir(copyPath) {
-		targetDir := filepath.Join(copyPath, "Libbox.xcframework")
+		targetDir := filepath.Join(copyPath, "CometBox.xcframework")
 		targetDir, _ = filepath.Abs(targetDir)
 		os.RemoveAll(targetDir)
-		os.Rename("Libbox.xcframework", targetDir)
+		os.Rename("CometBox.xcframework", targetDir)
 		log.Info("copied to ", targetDir)
 	}
 }
