@@ -21,6 +21,7 @@ func New(logger logger.Logger, timeout time.Duration) *Monitor {
 }
 
 func (m *Monitor) Start(taskName ...any) {
+	m.logger.Warn(F.ToString(taskName...), " Starting...")
 	m.timer = time.AfterFunc(m.timeout, func() {
 		m.logger.Warn(F.ToString(taskName...), " take too much time to finish!")
 	})

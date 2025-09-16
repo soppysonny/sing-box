@@ -14,11 +14,11 @@ import (
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/taskmonitor"
 	C "github.com/sagernet/sing-box/constant"
+	"github.com/sagernet/sing-box/experimental/CometBox/platform"
 	"github.com/sagernet/sing-box/experimental/deprecated"
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-tun"
+	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/json/badoption"
@@ -375,7 +375,11 @@ func (t *Inbound) Start(stage adapter.StartStage) error {
 		monitor.Finish()
 		t.tunOptions.Name = tunOptions.Name
 		if err != nil {
-			return E.Cause(err, "configure tun interface")
+			if t.platformInterface != nil {
+				return E.Cause(err, "configure tun interface platform not nil")
+			} else {
+				return E.Cause(err, "configure tun interface")
+			}
 		}
 		t.logger.Trace("creating stack")
 		t.tunIf = tunInterface

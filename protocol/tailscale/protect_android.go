@@ -1,7 +1,7 @@
 package tailscale
 
 import (
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
+	"github.com/sagernet/sing-box/experimental/CometBox/platform"
 	"github.com/sagernet/tailscale/net/netns"
 )
 

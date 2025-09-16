@@ -12,7 +12,7 @@ import (
 	"github.com/sagernet/sing-box/common/conntrack"
 	"github.com/sagernet/sing-box/common/listener"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
+	"github.com/sagernet/sing-box/experimental/CometBox/platform"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/atomic"

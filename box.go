@@ -21,8 +21,8 @@ import (
 	"github.com/sagernet/sing-box/dns"
 	"github.com/sagernet/sing-box/dns/transport/local"
 	"github.com/sagernet/sing-box/experimental"
+	"github.com/sagernet/sing-box/experimental/CometBox/platform"
 	"github.com/sagernet/sing-box/experimental/cachefile"
-	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/protocol/direct"
@@ -155,6 +155,7 @@ func New(options Options) (*Box, error) {
 	if err != nil {
 		return nil, E.Cause(err, "create log factory")
 	}
+	logFactory.Logger().Warn("platformInterface from context: ", platformInterface)
 
 	var internalServices []adapter.LifecycleService
 	certificateOptions := common.PtrValueOrDefault(options.Certificate)
