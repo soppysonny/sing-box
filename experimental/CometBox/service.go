@@ -47,25 +47,25 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: NewService started, platformInterface valid")
 	}
-	
+
 	// CRASH-DEBUG: BaseContext creation
 	ctx := BaseContext(platformInterface)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: BaseContext created successfully")
 	}
-	
+
 	// CRASH-DEBUG: File manager setup
 	ctx = filemanager.WithDefault(ctx, sWorkingPath, sTempPath, sUserID, sGroupID)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: FileManager setup completed")
 	}
-	
+
 	// CRASH-DEBUG: Deprecated manager registration
 	service.MustRegister[deprecated.Manager](ctx, new(deprecatedManager))
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Deprecated manager registered")
 	}
-	
+
 	// CRASH-DEBUG: Config parsing
 	options, err := parseConfig(ctx, configContent)
 	if err != nil {
@@ -77,31 +77,31 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Config parsing successful")
 	}
-	
+
 	// CRASH-DEBUG: Memory cleanup
 	runtimeDebug.FreeOSMemory()
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Memory cleanup completed")
 	}
-	
+
 	// CRASH-DEBUG: Context cancellation setup
 	ctx, cancel := context.WithCancel(ctx)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Context cancellation setup completed")
 	}
-	
+
 	// CRASH-DEBUG: URL test history storage
 	urlTestHistoryStorage := urltest.NewHistoryStorage()
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: URLTest history storage created")
 	}
-	
+
 	// CRASH-DEBUG: Context with pointer
 	ctx = service.ContextWithPtr(ctx, urlTestHistoryStorage)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Context with pointer setup completed")
 	}
-	
+
 	// CRASH-DEBUG: Platform wrapper creation
 	platformWrapper := &platformInterfaceWrapper{
 		iif:       platformInterface,
@@ -110,13 +110,13 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Platform wrapper created successfully")
 	}
-	
+
 	// CRASH-DEBUG: Platform interface registration
 	service.MustRegister[platform.Interface](ctx, platformWrapper)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Platform interface registered successfully")
 	}
-	
+
 	// CRASH-DEBUG: Box creation (most likely crash point)
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: About to create box instance - CRITICAL POINT")
@@ -136,18 +136,18 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Box instance created successfully")
 	}
-	
+
 	// CRASH-DEBUG: Final memory cleanup
 	runtimeDebug.FreeOSMemory()
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Final memory cleanup completed")
 	}
-	
+
 	// CRASH-DEBUG: BoxService creation
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: About to create BoxService struct")
 	}
-	
+
 	boxService := &BoxService{
 		ctx:                   ctx,
 		cancel:                cancel,
@@ -156,11 +156,11 @@ func NewService(configContent string, platformInterface PlatformInterface) (*Box
 		pauseManager:          service.FromContext[pause.Manager](ctx),
 		clashServer:           service.FromContext[adapter.ClashServer](ctx),
 	}
-	
+
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: BoxService created successfully - FUNCTION COMPLETE")
 	}
-	
+
 	return boxService, nil
 }
 

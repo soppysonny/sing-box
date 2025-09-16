@@ -391,7 +391,14 @@ func (t *Inbound) Start(stage adapter.StartStage) error {
 			forwarderBindInterface = true
 			includeAllNetworks = t.platformInterface.IncludeAllNetworks()
 		}
-		tunStack, err := tun.NewStack(t.stack, tun.StackOptions{
+		
+		// Fix for includeAllNetworks: force gvisor stack when includeAllNetworks is enabled
+		actualStack := t.stack
+		if includeAllNetworks && (actualStack == "system" || actualStack == "mixed" || actualStack == "") {
+			t.logger.Warn("includeAllNetworks is enabled, forcing stack to gvisor (was: ", actualStack, ")")
+			actualStack = "gvisor"
+		}
+		tunStack, err := tun.NewStack(actualStack, tun.StackOptions{
 			Context:                t.ctx,
 			Tun:                    tunInterface,
 			TunOptions:             t.tunOptions,

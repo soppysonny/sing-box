@@ -28,12 +28,12 @@ func BaseContext(platformInterface PlatformInterface) context.Context {
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: BaseContext entry - creating DNS registry")
 	}
-	
+
 	dnsRegistry := include.DNSTransportRegistry()
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: DNS registry created successfully")
 	}
-	
+
 	if platformInterface != nil {
 		if platformInterface != nil {
 			platformInterface.WriteLog("CRASH-DEBUG: Checking platform interface for local DNS transport")
@@ -54,17 +54,17 @@ func BaseContext(platformInterface PlatformInterface) context.Context {
 			}
 		}
 	}
-	
+
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: About to create box context")
 	}
-	
+
 	ctx := box.Context(context.Background(), include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), dnsRegistry, include.ServiceRegistry())
-	
+
 	if platformInterface != nil {
 		platformInterface.WriteLog("CRASH-DEBUG: Box context created successfully")
 	}
-	
+
 	return ctx
 }
 

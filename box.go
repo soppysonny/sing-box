@@ -96,17 +96,35 @@ func Context(
 
 func New(options Options) (*Box, error) {
 	createdAt := time.Now()
+	// CRASH-DEBUG: Function entry
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: box.New() function entry")
+	}
+
 	ctx := options.Context
 	if ctx == nil {
 		ctx = context.Background()
 	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Context setup completed")
+	}
+
 	ctx = service.ContextWithDefaultRegistry(ctx)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: ContextWithDefaultRegistry completed")
+	}
 
 	endpointRegistry := service.FromContext[adapter.EndpointRegistry](ctx)
 	inboundRegistry := service.FromContext[adapter.InboundRegistry](ctx)
 	outboundRegistry := service.FromContext[adapter.OutboundRegistry](ctx)
 	dnsTransportRegistry := service.FromContext[adapter.DNSTransportRegistry](ctx)
 	serviceRegistry := service.FromContext[adapter.ServiceRegistry](ctx)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: All registries retrieved from context")
+	}
 
 	if endpointRegistry == nil {
 		return nil, E.New("missing endpoint registry in context")
@@ -124,9 +142,23 @@ func New(options Options) (*Box, error) {
 		return nil, E.New("missing service registry in context")
 	}
 
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: All registry validation passed")
+	}
+
 	ctx = pause.WithDefaultManager(ctx)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Pause manager setup completed")
+	}
+
 	experimentalOptions := common.PtrValueOrDefault(options.Experimental)
 	applyDebugOptions(common.PtrValueOrDefault(experimentalOptions.Debug))
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Debug options applied")
+	}
+
 	var needCacheFile bool
 	var needClashAPI bool
 	var needV2RayAPI bool
@@ -140,10 +172,20 @@ func New(options Options) (*Box, error) {
 		needV2RayAPI = true
 	}
 	platformInterface := service.FromContext[platform.Interface](ctx)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Platform interface retrieved from context")
+	}
+
 	var defaultLogWriter io.Writer
 	if platformInterface != nil {
 		defaultLogWriter = io.Discard
 	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: About to create log factory - CRITICAL POINT")
+	}
+
 	logFactory, err := log.New(log.Options{
 		Context:        ctx,
 		Options:        common.PtrValueOrDefault(options.Log),
@@ -153,16 +195,63 @@ func New(options Options) (*Box, error) {
 		PlatformWriter: options.PlatformLogWriter,
 	})
 	if err != nil {
+		if options.PlatformLogWriter != nil {
+			options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Log factory creation FAILED: "+err.Error())
+		}
 		return nil, E.Cause(err, "create log factory")
 	}
-	logFactory.Logger().Warn("platformInterface from context: ", platformInterface)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Log factory created successfully")
+	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: About to call logFactory.Logger()")
+	}
+
+	logger := logFactory.Logger()
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Logger retrieved successfully, about to log platform interface")
+	}
+
+	// Safe logging of platform interface
+	if platformInterface != nil {
+		if options.PlatformLogWriter != nil {
+			options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Platform interface is not nil, logging it")
+		}
+		logger.Warn("platformInterface from context: ", "non-nil")
+	} else {
+		if options.PlatformLogWriter != nil {
+			options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Platform interface is nil")
+		}
+		logger.Warn("platformInterface from context: nil")
+	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Platform interface logged successfully")
+	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: About to setup certificate store")
+	}
 
 	var internalServices []adapter.LifecycleService
 	certificateOptions := common.PtrValueOrDefault(options.Certificate)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Certificate options retrieved")
+	}
+
 	if C.IsAndroid || certificateOptions.Store != "" && certificateOptions.Store != C.CertificateStoreSystem ||
 		len(certificateOptions.Certificate) > 0 ||
 		len(certificateOptions.CertificatePath) > 0 ||
 		len(certificateOptions.CertificateDirectoryPath) > 0 {
+
+		if options.PlatformLogWriter != nil {
+			options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: About to create certificate store")
+		}
+
 		certificateStore, err := certificate.NewStore(ctx, logFactory.NewLogger("certificate"), certificateOptions)
 		if err != nil {
 			return nil, err
@@ -171,22 +260,68 @@ func New(options Options) (*Box, error) {
 		internalServices = append(internalServices, certificateStore)
 	}
 
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Certificate store setup completed")
+	}
+
 	routeOptions := common.PtrValueOrDefault(options.Route)
 	dnsOptions := common.PtrValueOrDefault(options.DNS)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: About to create managers")
+	}
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Creating endpoint manager")
+	}
 	endpointManager := endpoint.NewManager(logFactory.NewLogger("endpoint"), endpointRegistry)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Creating inbound manager")
+	}
 	inboundManager := inbound.NewManager(logFactory.NewLogger("inbound"), inboundRegistry, endpointManager)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Creating outbound manager")
+	}
 	outboundManager := outbound.NewManager(logFactory.NewLogger("outbound"), outboundRegistry, endpointManager, routeOptions.Final)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Creating DNS transport manager")
+	}
 	dnsTransportManager := dns.NewTransportManager(logFactory.NewLogger("dns/transport"), dnsTransportRegistry, outboundManager, dnsOptions.Final)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Creating service manager")
+	}
 	serviceManager := boxService.NewManager(logFactory.NewLogger("service"), serviceRegistry)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: All managers created successfully")
+	}
+
 	service.MustRegister[adapter.EndpointManager](ctx, endpointManager)
 	service.MustRegister[adapter.InboundManager](ctx, inboundManager)
 	service.MustRegister[adapter.OutboundManager](ctx, outboundManager)
 	service.MustRegister[adapter.DNSTransportManager](ctx, dnsTransportManager)
 	service.MustRegister[adapter.ServiceManager](ctx, serviceManager)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: All managers registered successfully")
+	}
+
 	dnsRouter := dns.NewRouter(ctx, logFactory, dnsOptions)
 	service.MustRegister[adapter.DNSRouter](ctx, dnsRouter)
+
+	if options.PlatformLogWriter != nil {
+		options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: DNS router created and registered")
+	}
+
 	networkManager, err := route.NewNetworkManager(ctx, logFactory.NewLogger("network"), routeOptions)
 	if err != nil {
+		if options.PlatformLogWriter != nil {
+			options.PlatformLogWriter.WriteMessage(1, "CRASH-DEBUG: Network manager creation FAILED: "+err.Error())
+		}
 		return nil, E.Cause(err, "initialize network manager")
 	}
 	service.MustRegister[adapter.NetworkManager](ctx, networkManager)
