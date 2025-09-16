@@ -43,84 +43,22 @@ type BoxService struct {
 }
 
 func NewService(configContent string, platformInterface PlatformInterface) (*BoxService, error) {
-	// CRASH-DEBUG: Function entry
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: NewService started, platformInterface valid")
-	}
-
-	// CRASH-DEBUG: BaseContext creation
 	ctx := BaseContext(platformInterface)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: BaseContext created successfully")
-	}
-
-	// CRASH-DEBUG: File manager setup
 	ctx = filemanager.WithDefault(ctx, sWorkingPath, sTempPath, sUserID, sGroupID)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: FileManager setup completed")
-	}
-
-	// CRASH-DEBUG: Deprecated manager registration
 	service.MustRegister[deprecated.Manager](ctx, new(deprecatedManager))
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Deprecated manager registered")
-	}
-
-	// CRASH-DEBUG: Config parsing
 	options, err := parseConfig(ctx, configContent)
 	if err != nil {
-		if platformInterface != nil {
-			platformInterface.WriteLog("CRASH-DEBUG: Config parsing failed: " + err.Error())
-		}
 		return nil, err
 	}
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Config parsing successful")
-	}
-
-	// CRASH-DEBUG: Memory cleanup
 	runtimeDebug.FreeOSMemory()
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Memory cleanup completed")
-	}
-
-	// CRASH-DEBUG: Context cancellation setup
 	ctx, cancel := context.WithCancel(ctx)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Context cancellation setup completed")
-	}
-
-	// CRASH-DEBUG: URL test history storage
 	urlTestHistoryStorage := urltest.NewHistoryStorage()
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: URLTest history storage created")
-	}
-
-	// CRASH-DEBUG: Context with pointer
 	ctx = service.ContextWithPtr(ctx, urlTestHistoryStorage)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Context with pointer setup completed")
-	}
-
-	// CRASH-DEBUG: Platform wrapper creation
 	platformWrapper := &platformInterfaceWrapper{
 		iif:       platformInterface,
 		useProcFS: platformInterface.UseProcFS(),
 	}
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Platform wrapper created successfully")
-	}
-
-	// CRASH-DEBUG: Platform interface registration
 	service.MustRegister[platform.Interface](ctx, platformWrapper)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: Platform interface registered successfully")
-	}
-
-	// CRASH-DEBUG: Box creation (most likely crash point)
-	if platformInterface != nil {
-		platformInterface.WriteLog("CRASH-DEBUG: About to create box instance - CRITICAL POINT")
-	}
 	instance, err := box.New(box.Options{
 		Context:           ctx,
 		Options:           options,
