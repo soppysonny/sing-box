@@ -20,6 +20,7 @@ var (
 	target        string
 	platform      string
 	withTailscale bool
+	library       string
 )
 
 func init() {
@@ -27,6 +28,7 @@ func init() {
 	flag.StringVar(&target, "target", "android", "target platform")
 	flag.StringVar(&platform, "platform", "", "specify platform")
 	flag.BoolVar(&withTailscale, "with-tailscale", false, "build tailscale for iOS and tvOS")
+	flag.StringVar(&library, "library", "cometbox", "library to build: cometbox or libbox")
 }
 
 func main() {
@@ -39,6 +41,17 @@ func main() {
 		buildAndroid()
 	case "apple":
 		buildApple()
+	}
+}
+
+func getLibraryInfo() (path, name string) {
+	switch library {
+	case "libbox":
+		return "./experimental/libbox", "Libbox"
+	case "cometbox":
+		return "./experimental/CometBox", "CometBox"
+	default:
+		return "./experimental/CometBox", "CometBox"
 	}
 }
 
@@ -117,8 +130,9 @@ func buildAndroid() {
 		tags = append(tags, debugTags...)
 	}
 
+	libPath, _ := getLibraryInfo()
 	args = append(args, "-tags", strings.Join(tags, ","))
-	args = append(args, "./experimental/CometBox")
+	args = append(args, libPath)
 
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
@@ -150,11 +164,13 @@ func buildApple() {
 		bindTarget = "ios,tvos,macos"
 	}
 
+	libPath, libName := getLibraryInfo()
+
 	args := []string{
 		"bind",
 		"-v",
 		"-target", bindTarget,
-		"-libname=CometBox",
+		"-libname=" + libName,
 		"-tags-not-macos=with_low_memory",
 	}
 	if !withTailscale {
@@ -176,7 +192,7 @@ func buildApple() {
 	}
 
 	args = append(args, "-tags", strings.Join(tags, ","))
-	args = append(args, "./experimental/CometBox")
+	args = append(args, libPath)
 
 	command := exec.Command(build_shared.GoBinPath+"/gomobile", args...)
 	command.Stdout = os.Stdout
@@ -188,10 +204,11 @@ func buildApple() {
 
 	copyPath := filepath.Join("..", "sing-box-for-apple")
 	if rw.IsDir(copyPath) {
-		targetDir := filepath.Join(copyPath, "CometBox.xcframework")
+		frameworkName := libName + ".xcframework"
+		targetDir := filepath.Join(copyPath, frameworkName)
 		targetDir, _ = filepath.Abs(targetDir)
 		os.RemoveAll(targetDir)
-		os.Rename("CometBox.xcframework", targetDir)
+		os.Rename(frameworkName, targetDir)
 		log.Info("copied to ", targetDir)
 	}
 }

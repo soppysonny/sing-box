@@ -16,8 +16,8 @@ import (
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/option"
 	R "github.com/sagernet/sing-box/route/rule"
-	"github.com/sagernet/sing-mux"
-	"github.com/sagernet/sing-vmess"
+	mux "github.com/sagernet/sing-mux"
+	vmess "github.com/sagernet/sing-vmess"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -110,10 +110,26 @@ func (r *Router) routeConnection(ctx context.Context, conn net.Conn, metadata ad
 				buf.ReleaseMulti(buffers)
 				return E.New("TCP is not supported by outbound: ", selectedOutbound.Tag())
 			}
+			// 记录路由分流信息
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "TCP路由分流 -> ", action.Outbound, " | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 		case *R.RuleActionReject:
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "TCP连接拒绝 | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 			buf.ReleaseMulti(buffers)
 			return action.Error(ctx)
 		case *R.RuleActionHijackDNS:
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "TCP DNS劫持 | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 			for _, buffer := range buffers {
 				conn = bufio.NewCachedConn(conn, buffer)
 			}
@@ -128,6 +144,12 @@ func (r *Router) routeConnection(ctx context.Context, conn net.Conn, metadata ad
 			return E.New("TCP is not supported by default outbound: ", defaultOutbound.Tag())
 		}
 		selectedOutbound = defaultOutbound
+		// 记录默认路由信息
+		displayDest := metadata.Destination.String()
+		if metadata.Domain != "" {
+			displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+		}
+		r.logger.WarnContext(ctx, "TCP默认路由 -> ", defaultOutbound.Tag(), " | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 	}
 
 	for _, buffer := range buffers {
@@ -225,10 +247,26 @@ func (r *Router) routePacketConnection(ctx context.Context, conn N.PacketConn, m
 				N.ReleaseMultiPacketBuffer(packetBuffers)
 				return E.New("UDP is not supported by outbound: ", selectedOutbound.Tag())
 			}
+			// 记录UDP路由分流信息
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "UDP路由分流 -> ", action.Outbound, " | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 		case *R.RuleActionReject:
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "UDP连接拒绝 | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 			N.ReleaseMultiPacketBuffer(packetBuffers)
 			return action.Error(ctx)
 		case *R.RuleActionHijackDNS:
+			displayDest := metadata.Destination.String()
+			if metadata.Domain != "" {
+				displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+			}
+			r.logger.WarnContext(ctx, "UDP DNS劫持 | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 			return r.hijackDNSPacket(ctx, conn, packetBuffers, metadata, onClose)
 		}
 	}
@@ -239,6 +277,12 @@ func (r *Router) routePacketConnection(ctx context.Context, conn N.PacketConn, m
 			return E.New("UDP is not supported by outbound: ", defaultOutbound.Tag())
 		}
 		selectedOutbound = defaultOutbound
+		// 记录UDP默认路由信息
+		displayDest := metadata.Destination.String()
+		if metadata.Domain != "" {
+			displayDest = F.ToString(metadata.Domain, ":", metadata.Destination.Port)
+		}
+		r.logger.WarnContext(ctx, "UDP默认路由 -> ", defaultOutbound.Tag(), " | 目标: ", displayDest, " | 源: ", metadata.Source.String())
 	}
 	for _, buffer := range packetBuffers {
 		conn = bufio.NewCachedPacketConn(conn, buffer.Buffer, buffer.Destination)
@@ -370,18 +414,20 @@ func (r *Router) matchRule(
 		metadata.InboundOptions = option.InboundOptions{}
 	}
 
-match:
+	r.logger.WarnContext(ctx, "开始规则匹配，目标: ", metadata.Destination.String(), ", 域名: ", metadata.Domain, ", 共 ", len(r.rules), " 条规则")
 	for currentRuleIndex, currentRule := range r.rules {
 		metadata.ResetRuleCache()
-		if !currentRule.Match(metadata) {
+		isMatch := currentRule.Match(metadata)
+		r.logger.WarnContext(ctx, "规则[", currentRuleIndex, "] ", currentRule.String(), " | 匹配结果: ", isMatch)
+		if !isMatch {
 			continue
 		}
 		if !preMatch {
 			ruleDescription := currentRule.String()
 			if ruleDescription != "" {
-				r.logger.DebugContext(ctx, "match[", currentRuleIndex, "] ", currentRule, " => ", currentRule.Action())
+				r.logger.WarnContext(ctx, "匹配成功[", currentRuleIndex, "] ", currentRule, " => ", currentRule.Action())
 			} else {
-				r.logger.DebugContext(ctx, "match[", currentRuleIndex, "] => ", currentRule.Action())
+				r.logger.WarnContext(ctx, "匹配成功[", currentRuleIndex, "] => ", currentRule.Action())
 			}
 		} else {
 			switch currentRule.Action().Type() {
@@ -466,7 +512,7 @@ match:
 			} else {
 				selectedRule = currentRule
 				selectedRuleIndex = currentRuleIndex
-				break match
+				return
 			}
 		case *R.RuleActionResolve:
 			fatalErr = r.actionResolve(ctx, metadata, action)
@@ -481,7 +527,7 @@ match:
 			(actionType == C.RuleActionTypeSniff && preMatch) {
 			selectedRule = currentRule
 			selectedRuleIndex = currentRuleIndex
-			break match
+			return
 		}
 	}
 	return

@@ -240,6 +240,12 @@ lib_apple:
 lib_ios:
 	go run ./cmd/internal/build_libbox -target apple -platform ios
 
+lib_ios_libbox:
+	go run ./cmd/internal/build_libbox -target apple -platform ios -library libbox
+
+lib_ios_cometbox:
+	go run ./cmd/internal/build_libbox -target apple -platform ios -library cometbox
+
 lib:
 	go run ./cmd/internal/build_libbox -target android
 	go run ./cmd/internal/build_libbox -target ios
