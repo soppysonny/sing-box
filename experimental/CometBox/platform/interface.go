@@ -4,7 +4,7 @@ import (
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/process"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-tun"
+	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/logger"
 )
 
@@ -22,6 +22,7 @@ type Interface interface {
 	SystemCertificates() []string
 	process.Searcher
 	SendNotification(notification *Notification) error
+	OnSniffDomain(domain string)
 }
 
 type Notification struct {

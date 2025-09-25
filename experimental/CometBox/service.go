@@ -299,3 +299,10 @@ func (w *platformInterfaceWrapper) WriteMessage(level log.Level, message string)
 func (w *platformInterfaceWrapper) SendNotification(notification *platform.Notification) error {
 	return w.iif.SendNotification((*Notification)(notification))
 }
+
+func (w *platformInterfaceWrapper) OnSniffDomain(domain string) {
+	log.Info("[CometBox] OnSniffDomain: ", domain)
+	if w.iif != nil {
+		w.iif.OnSniffDomain(domain)
+	}
+}

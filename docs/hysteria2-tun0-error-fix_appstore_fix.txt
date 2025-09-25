@@ -1,0 +1,176 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns_proxy",
+        "address": "https://1.1.1.1/dns-query",
+        "address_resolver": "dns_resolver",
+        "strategy": "ipv4_only",
+        "detour": "select"
+      },
+      {
+        "tag": "dns_direct",
+        "address": "h3://dns.alidns.com/dns-query",
+        "address_resolver": "dns_resolver",
+        "strategy": "ipv4_only",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns_block",
+        "address": "rcode://refused"
+      },
+      {
+        "tag": "dns_resolver",
+        "address": "223.5.5.5",
+        "strategy": "ipv4_only",
+        "detour": "direct"
+      }
+    ],
+    "rules": [
+      {
+        "outbound": "any",
+        "server": "dns_resolver"
+      },
+      {
+        "server": "dns_direct",
+        "clash_mode": "direct"
+      },
+      {
+        "server": "dns_direct",
+        "domain_suffix": [
+          "icloudnative.io",
+          "fuckcloudnative.io",
+          "sealos.io",
+          "cdn.jsdelivr.net",
+          ".apple.com",
+          ".icloud.com",
+          ".me.com",
+          ".push.apple.com",
+          ".courier.push.apple.com"
+        ]
+      },
+      {
+        "server": "dns_proxy",
+        "rule_set": "geosite-geolocation-!cn"
+      }
+    ],
+    "final": "dns_direct",
+    "independent_cache": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "inet4_address": "172.19.0.1/30",
+      "auto_route": true,
+      "strict_route": false,
+      "stack": "mixed",
+      "sniff": true
+    },
+    {
+      "type": "socks",
+      "tag": "socks-in",
+      "listen": "::",
+      "listen_port": 5353
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "select",
+      "server": "139.224.212.210",
+      "server_port": 8443,
+      "password": "eB4WtUjRFjMQ+Yf/FdQFL42f4tVI0SCiDEo5aptqSmU=",
+      "tls": {
+        "enabled": true,
+        "server_name": "mbjztech.cn",
+        "insecure": false
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "dns-out"
+      },
+      {
+        "outbound": "direct",
+        "domain_suffix": [
+          ".apple.com",
+          ".icloud.com",
+          ".me.com",
+          ".push.apple.com",
+          ".courier.push.apple.com"
+        ]
+      },
+      {
+        "outbound": "direct",
+        "domain_suffix": [
+          "icloudnative.io",
+          "fuckcloudnative.io",
+          "sealos.io"
+        ]
+      },
+      {
+        "outbound": "direct",
+        "ip_is_private": true
+      },
+      {
+        "outbound": "direct",
+        "domain_suffix": [
+          ".cn",
+          ".中国",
+          ".公司",
+          ".网络"
+        ]
+      },
+      {
+        "outbound": "select",
+        "rule_set": "geosite-geolocation-!cn"
+      }
+    ],
+    "final": "select",
+    "auto_detect_interface": true,
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "geosite-geolocation-!cn",
+        "format": "binary",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-cn",
+        "format": "binary",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geoip-cn",
+        "format": "binary",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+        "download_detour": "direct"
+      }
+    ]
+  }
+}

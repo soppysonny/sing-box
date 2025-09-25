@@ -565,6 +565,10 @@ func (r *Router) actionSniff(
 			}
 		}
 		sniffBuffer := buf.NewPacket()
+
+		// 打印PeekStream调用信息
+		r.logger.InfoContext(ctx, "[Route] 准备开始流量嗅探 - 目标:", metadata.Destination.String(), ", 协议:", metadata.Protocol, ", 域名:", metadata.Domain)
+
 		err := sniff.PeekStream(
 			ctx,
 			metadata,
@@ -575,6 +579,14 @@ func (r *Router) actionSniff(
 			streamSniffers...,
 		)
 		metadata.SniffError = err
+
+		// 打印PeekStream结果
+		if err == nil {
+			r.logger.InfoContext(ctx, "[Route] 流量嗅探成功 - 目标:", metadata.Destination.String(), ", 协议:", metadata.Protocol, ", 域名:", metadata.Domain)
+		} else {
+			r.logger.InfoContext(ctx, "[Route] 流量嗅探失败 - 目标:", metadata.Destination.String(), ", 错误:", err)
+		}
+
 		if err == nil {
 			//goland:noinspection GoDeprecation
 			if action.OverrideDestination && M.IsDomainName(metadata.Domain) {
@@ -585,8 +597,20 @@ func (r *Router) actionSniff(
 			}
 			if metadata.Domain != "" && metadata.Client != "" {
 				r.logger.DebugContext(ctx, "sniffed protocol: ", metadata.Protocol, ", domain: ", metadata.Domain, ", client: ", metadata.Client)
+				// 添加域名上报日志
+				r.logger.InfoContext(ctx, "[流量嗅探] 域名上报 - 协议:", metadata.Protocol, ", 域名:", metadata.Domain, ", 客户端:", metadata.Client, ", 目标:", metadata.Destination.String())
+				// 桥接调用 CometBox 的 PlatformInterface.OnSniffDomain
+				if r.platformInterface != nil {
+					r.platformInterface.OnSniffDomain(strings.TrimSuffix(metadata.Domain, "."))
+				}
 			} else if metadata.Domain != "" {
 				r.logger.DebugContext(ctx, "sniffed protocol: ", metadata.Protocol, ", domain: ", metadata.Domain)
+				// 添加域名上报日志
+				r.logger.InfoContext(ctx, "[流量嗅探] 域名上报 - 协议:", metadata.Protocol, ", 域名:", metadata.Domain, ", 目标:", metadata.Destination.String())
+				// 桥接调用 CometBox 的 PlatformInterface.OnSniffDomain
+				if r.platformInterface != nil {
+					r.platformInterface.OnSniffDomain(strings.TrimSuffix(metadata.Domain, "."))
+				}
 			} else {
 				r.logger.DebugContext(ctx, "sniffed protocol: ", metadata.Protocol)
 			}

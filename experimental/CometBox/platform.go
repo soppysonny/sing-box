@@ -24,6 +24,7 @@ type PlatformInterface interface {
 	SystemCertificates() StringIterator
 	ClearDNSCache()
 	SendNotification(notification *Notification) error
+	OnSniffDomain(domain string)
 }
 
 type TunInterface interface {
