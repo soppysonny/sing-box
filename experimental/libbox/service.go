@@ -278,5 +278,5 @@ func (w *platformInterfaceWrapper) SendNotification(notification *platform.Notif
 }
 
 func (w *platformInterfaceWrapper) OnSniffDomain(domain string) {
-	log.Info("[libbox] OnSniffDomain: ", domain)
+	// libbox doesn't need to implement this, just provide empty implementation
 }

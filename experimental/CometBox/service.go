@@ -301,7 +301,6 @@ func (w *platformInterfaceWrapper) SendNotification(notification *platform.Notif
 }
 
 func (w *platformInterfaceWrapper) OnSniffDomain(domain string) {
-	log.Info("[CometBox] OnSniffDomain: ", domain)
 	if w.iif != nil {
 		w.iif.OnSniffDomain(domain)
 	}

@@ -62,16 +62,13 @@ func NewRouter(ctx context.Context, logFactory log.Factory, options option.Route
 }
 
 func (r *Router) Initialize(rules []option.Rule, ruleSets []option.RuleSet) error {
-	r.logger.Warn("开始初始化路由规则，总共 ", len(rules), " 条规则")
 	for i, options := range rules {
 		rule, err := R.NewRule(r.ctx, r.logger, options, false)
 		if err != nil {
 			return E.Cause(err, "parse rule[", i, "]")
 		}
 		r.rules = append(r.rules, rule)
-		r.logger.Warn("加载规则[", i, "]: ", rule.String(), " => ", rule.Action())
 	}
-	r.logger.Warn("开始初始化规则集，总共 ", len(ruleSets), " 个规则集")
 	for i, options := range ruleSets {
 		if _, exists := r.ruleSetMap[options.Tag]; exists {
 			return E.New("duplicate rule-set tag: ", options.Tag)

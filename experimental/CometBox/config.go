@@ -122,7 +122,6 @@ func (s *platformInterfaceStub) SendNotification(notification *platform.Notifica
 }
 
 func (s *platformInterfaceStub) OnSniffDomain(domain string) {
-	log.Info("[CometBox] OnSniffDomain (stub): ", domain)
 }
 
 type interfaceMonitorStub struct{}
