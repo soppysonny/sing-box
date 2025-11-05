@@ -7,7 +7,9 @@
       "Bash(go test:*)",
       "Bash(export PATH=$HOME/go/bin:$PATH)",
       "Bash(go run:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Read(//Users/lava/Desktop/**)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
