@@ -24,14 +24,25 @@ import (
 	"github.com/sagernet/sing/service"
 )
 
+var globalLocalDNSTransport LocalDNSTransport
+
+func RegisterLocalDNSTransport(transport LocalDNSTransport) {
+	globalLocalDNSTransport = transport
+}
+
 func BaseContext(platformInterface PlatformInterface) context.Context {
 	dnsRegistry := include.DNSTransportRegistry()
+	var localTransport LocalDNSTransport
 	if platformInterface != nil {
-		if localTransport := platformInterface.LocalDNSTransport(); localTransport != nil {
-			dns.RegisterTransport[option.LocalDNSServerOptions](dnsRegistry, C.DNSTypeLocal, func(ctx context.Context, logger log.ContextLogger, tag string, options option.LocalDNSServerOptions) (adapter.DNSTransport, error) {
-				return newPlatformTransport(localTransport, tag, options), nil
-			})
-		}
+		localTransport = platformInterface.LocalDNSTransport()
+	}
+	if localTransport == nil {
+		localTransport = globalLocalDNSTransport
+	}
+	if localTransport != nil {
+		dns.RegisterTransport[option.LocalDNSServerOptions](dnsRegistry, C.DNSTypeLocal, func(ctx context.Context, logger log.ContextLogger, tag string, options option.LocalDNSServerOptions) (adapter.DNSTransport, error) {
+			return newPlatformTransport(localTransport, tag, options), nil
+		})
 	}
 	return box.Context(context.Background(), include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), dnsRegistry, include.ServiceRegistry())
 }
