@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -14,7 +15,6 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/common"
-	"github.com/sagernet/sing/common/atomic"
 	"github.com/sagernet/sing/common/batch"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
@@ -192,7 +192,7 @@ type URLTestGroup struct {
 	ticker                       *time.Ticker
 	close                        chan struct{}
 	started                      bool
-	lastActive                   atomic.TypedValue[time.Time]
+	lastActive                   common.TypedValue[time.Time]
 }
 
 func NewURLTestGroup(ctx context.Context, outboundManager adapter.OutboundManager, logger log.Logger, outbounds []adapter.Outbound, link string, interval time.Duration, tolerance uint16, idleTimeout time.Duration, interruptExternalConnections bool) (*URLTestGroup, error) {
@@ -313,7 +313,7 @@ func (g *URLTestGroup) Select(network string) (adapter.Outbound, bool) {
 }
 
 func (g *URLTestGroup) loopCheck() {
-	if time.Now().Sub(g.lastActive.Load()) > g.interval {
+	if time.Since(g.lastActive.Load()) > g.interval {
 		g.lastActive.Store(time.Now())
 		g.CheckOutbounds(false)
 	}
@@ -323,7 +323,7 @@ func (g *URLTestGroup) loopCheck() {
 			return
 		case <-g.ticker.C:
 		}
-		if time.Now().Sub(g.lastActive.Load()) > g.idleTimeout {
+		if time.Since(g.lastActive.Load()) > g.idleTimeout {
 			g.access.Lock()
 			g.ticker.Stop()
 			g.ticker = nil
@@ -360,7 +360,7 @@ func (g *URLTestGroup) urlTest(ctx context.Context, force bool) (map[string]uint
 			continue
 		}
 		history := g.history.LoadURLTestHistory(realTag)
-		if !force && history != nil && time.Now().Sub(history.Time) < g.interval {
+		if !force && history != nil && time.Since(history.Time) < g.interval {
 			continue
 		}
 		checked[realTag] = true
