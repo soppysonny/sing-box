@@ -9,7 +9,8 @@
       "Bash(go run:*)",
       "Bash(./gradlew:*)",
       "Read(//Users/lava/Desktop/**)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//Users/lava/go/pkg/mod/github.com/sagernet/**)"
     ],
     "deny": [],
     "ask": []

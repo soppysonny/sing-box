@@ -2,6 +2,7 @@ package CometBox
 
 import (
 	"context"
+	"fmt"
 	"net/netip"
 	"os"
 	"runtime"
@@ -29,6 +30,8 @@ import (
 	"github.com/sagernet/sing/service"
 	"github.com/sagernet/sing/service/filemanager"
 	"github.com/sagernet/sing/service/pause"
+
+	"golang.org/x/sys/unix"
 )
 
 type BoxService struct {
@@ -175,6 +178,24 @@ func (w *platformInterfaceWrapper) OpenTun(options *tun.Options, platformOptions
 	if len(options.IncludeAndroidUser) > 0 {
 		return nil, E.New("platform: unsupported android_user option")
 	}
+
+	// Log detailed TUN configuration for debugging iOS 16 batch read issues
+	if runtime.GOOS == "darwin" {
+		var utsname unix.Utsname
+		if err := unix.Uname(&utsname); err == nil {
+			// Convert Release to string
+			release := make([]byte, 0, len(utsname.Release))
+			for _, b := range utsname.Release {
+				if b == 0 {
+					break
+				}
+				release = append(release, byte(b))
+			}
+			batchSize := ((512 * 1024) / int(options.MTU)) + 1
+			w.iif.WriteLog(fmt.Sprintf("TUN-DEBUG: Darwin kernel: %s, MTU: %d, Calculated batchSize: %d", string(release), options.MTU, batchSize))
+		}
+	}
+
 	routeRanges, err := options.BuildAutoRouteRanges(true)
 	if err != nil {
 		return nil, err

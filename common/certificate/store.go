@@ -44,11 +44,17 @@ func NewStore(ctx context.Context, logger logger.Logger, options option.Certific
 			}
 		}
 		if !systemValid {
+			// 如果平台未提供证书，优先尝试使用系统证书池
+			// 但在Android等平台上，SystemCertPool()可能返回空或不完整的证书
+			// 此时回退到Mozilla内置证书池以确保TLS验证正常工作
 			certPool, err := x509.SystemCertPool()
 			if err != nil {
-				return nil, err
+				// SystemCertPool失败，使用Mozilla证书池
+				logger.Warn("failed to load system certificate pool, using mozilla certificates: ", err)
+				systemPool = mozillaIncluded.Clone()
+			} else {
+				systemPool = certPool
 			}
-			systemPool = certPool
 		}
 	case C.CertificateStoreMozilla:
 		systemPool = mozillaIncluded

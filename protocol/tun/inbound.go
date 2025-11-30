@@ -426,7 +426,18 @@ func (t *Inbound) Start(stage adapter.StartStage) error {
 		err = t.tunIf.Start()
 		monitor.Finish()
 		if err != nil {
+			// Enhanced error logging for iOS 16 batch read issues
+			t.logger.Error("TUN interface start failed: ", err)
+			t.logger.Error("TUN options - Name: ", t.tunOptions.Name, ", MTU: ", t.tunOptions.MTU, ", Stack: ", t.stack)
+			if runtime.GOOS == "darwin" {
+				t.logger.Error("Darwin platform detected - this may be related to batch read issues on iOS 16")
+			}
 			return E.Cause(err, "starting TUN interface")
+		}
+		// Log TUN configuration for debugging
+		if runtime.GOOS == "darwin" {
+			batchSize := ((512 * 1024) / int(t.tunOptions.MTU)) + 1
+			t.logger.Info("TUN started - Name: ", t.tunOptions.Name, ", MTU: ", t.tunOptions.MTU, ", Stack: ", t.stack, ", Estimated batchSize: ", batchSize)
 		}
 		if t.autoRedirect != nil {
 			monitor.Start("initialize auto-redirect")
